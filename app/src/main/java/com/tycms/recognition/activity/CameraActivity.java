@@ -173,7 +173,8 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
         // 数斗
-        bucketCounter.feedRT(results);
+//        bucketCounter.feedRT(results);
+        bucketCounter.feedRT20200706(results);
 
         runOnUiThread(new Runnable() {
             @Override

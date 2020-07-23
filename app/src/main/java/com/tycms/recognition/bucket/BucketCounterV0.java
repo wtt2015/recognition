@@ -57,6 +57,38 @@ public class BucketCounterV0  implements IBucketCounter {
         return ret;
     }
 
+
+    public int feedRT20200706(List<Recognition> recognition) {
+        int ret = 0;
+        recognition = Helper.filter(recognition);
+        if(Helper.dumpingTopOrNot(recognition) == 1) {
+//            if(this.verticalSum >= 3 && this.horizontalSum >= 3 && this.bucketInterval >= 7) {
+//               if(this.verticalSum >= 2 && this.horizontalSum >= 1 && this.bucketInterval >= 2) {
+            if(this.verticalSum >= 5 && this.horizontalSum >= 2 && this.bucketInterval >= 7) {
+                ++this.bucketSum;
+                Log.i(TAG,"bucketSum +1  bucketSum= " +bucketSum);
+                this.verticalSum = 0;
+                this.horizontalSum = 0;
+                this.bucketInterval = 0;
+                ret = 1;
+            }
+        } else {
+            ++this.bucketInterval;
+            Log.i(TAG,"bucketInterval +1  bucketInterval= " +bucketInterval);
+        }
+
+        if(Helper.verticalOrNot(recognition) == 1) {
+            ++this.verticalSum;
+            Log.i(TAG,"verticalSum +1  verticalSum= " +verticalSum);
+        } else if(Helper.verticalOrNot(recognition) == 0) {
+            ++this.horizontalSum;
+            Log.i(TAG,"horizontalSum +1  horizontalSum= " +horizontalSum);
+        }
+
+        return ret;
+    }
+
+
     public int feedOver(List<Recognition> recognitions) {
         this.reset();
         return 0;

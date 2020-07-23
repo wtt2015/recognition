@@ -24,7 +24,8 @@ public class DetectorManager {
     private ObjectDetector detector;
 //    private String TF_OD_API_MODEL_FILE = "detect.tflite";
 //    private String TF_OD_API_LABELS_FILE = "labelmap0.txt";
-    private String TF_OD_API_MODEL_FILE = "detect_0529_9.tflite";
+//    private String TF_OD_API_MODEL_FILE = "detect_0529_9.tflite";
+    private String TF_OD_API_MODEL_FILE = "ty_detect_0702_12.tflite";
     private String TF_OD_API_LABELS_FILE = "ty_labelmap.txt";
 
     private Matrix cropToFrameTransform;
@@ -36,8 +37,10 @@ public class DetectorManager {
      */
     public void init(Context context) {
         try {
-            detector = ObjectDetector.Builder.generateTFLiteFloatObjectDetector(context,
-                    TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE);
+//            detector = ObjectDetector.Builder.generateTFLiteFloatObjectDetector(context,
+//                    TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE);
+            detector = ObjectDetector.Builder.generateTFLiteObjectDetector(context,
+                    TF_OD_API_MODEL_FILE, TF_OD_API_LABELS_FILE,false);
         } catch (NGLiteException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -148,8 +151,8 @@ public class DetectorManager {
     // 将分析结果还原
     private List<Recognition> convertList(List<Recognition> results) {
         final List<Recognition> mappedRecognitions = new LinkedList<>();
-        float MINIMUM_CONFIDENCE_TF_OD_API = 0.5f;
-        float MINIMUM_CONFIDENCE_TF_OD_API_TRUCK = 0.5f;
+        float MINIMUM_CONFIDENCE_TF_OD_API = 0.8f;
+        float MINIMUM_CONFIDENCE_TF_OD_API_TRUCK = 0.4f;
 
         float minimumConfidence = MINIMUM_CONFIDENCE_TF_OD_API;
         float minimumConfidenceTruck = MINIMUM_CONFIDENCE_TF_OD_API_TRUCK;

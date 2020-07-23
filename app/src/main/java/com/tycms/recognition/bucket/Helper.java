@@ -75,6 +75,19 @@ public class Helper{
         return list;
     }
 
+    /**
+     * 铲斗是否在卡车上方（精度略低，只要求上方）
+     *
+     * @param a
+     * @param b
+     * @return
+     */
+    public static boolean isInTop(Recognition a, Recognition b) {
+        float h0 = a.getLocation().bottom;
+        float h1 = b.getLocation().bottom;
+        return h0 / 2.0F <= h1 / 2.0F;
+    }
+
     public static boolean isVertical(String label) {
         return label.startsWith("bucket1");
     }
@@ -100,5 +113,17 @@ public class Helper{
         return recognitions != null &&
                 !recognitions.isEmpty()?(recognitions.size() == 1?0:(recognitions.size() == 2?(isInInternal((Recognition)recognitions.get(0), (Recognition)recognitions.get(1))?1:0):0)):-1;
     }
+
+    /**
+     * 铲斗在卡车上方
+     *
+     * @param recognitions
+     * @return
+     */
+    public static int dumpingTopOrNot(List<Recognition> recognitions) {
+        return recognitions != null &&
+                !recognitions.isEmpty() ? (recognitions.size() == 1 ? 0 : (recognitions.size() == 2 ? (isInTop((Recognition) recognitions.get(0), (Recognition) recognitions.get(1)) ? 1 : 0) : 0)) : -1;
+    }
+
 }
 

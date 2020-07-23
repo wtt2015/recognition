@@ -28,7 +28,8 @@ class ClassifierManager {
         if (isTFLite) {
 //            String tfFileName = "mobilenet_v1_1.0_224.tflite";
 //            String labelFileName = "labels.txt";
-            String tfFileName = "ty_cla_model.tflite";
+//            String tfFileName = "ty_cla_model.tflite";
+            String tfFileName = "classify_model.tflite";
             String labelFileName = "ty_labels.txt";
             boolean isQuantized = false;
 

@@ -22,9 +22,6 @@ public class DetectorManager {
     private final String TAG = "DetectorManager";
 
     private ObjectDetector detector;
-//    private String TF_OD_API_MODEL_FILE = "detect.tflite";
-//    private String TF_OD_API_LABELS_FILE = "labelmap0.txt";
-//    private String TF_OD_API_MODEL_FILE = "detect_0529_9.tflite";
     private String TF_OD_API_MODEL_FILE = "ty_detect_0702_12.tflite";
     private String TF_OD_API_LABELS_FILE = "ty_labelmap.txt";
 

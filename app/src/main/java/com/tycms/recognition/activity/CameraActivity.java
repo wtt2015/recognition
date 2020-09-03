@@ -23,7 +23,7 @@ import com.tycms.recognition.R;
 import com.tycms.recognition.bucket.BucketCounterV0;
 import com.tycms.recognition.bucket.IBucketCounter;
 import com.tycms.recognition.customview.OverlayView;
-import com.tycms.recognition.detection.DetectorManager;
+import com.tycms.recognition.detection.DetectorManagerMerge;
 import com.tycms.recognition.tracking.MultiBoxTrackerNgLite;
 import com.tycms.recognition.util.BitmapUtil;
 import org.nelbds.nglite.func.Recognition;
@@ -47,7 +47,9 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     protected int previewHeight = 0;
     private Integer sensorOrientation;
 
-    private DetectorManager detectorManager;
+//    private DetectorManager detectorManager;
+    private DetectorManagerMerge detectorManager;
+
 
     private MultiBoxTrackerNgLite tracker;
     private OverlayView trackingOverlay;
@@ -75,7 +77,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             requestPermission();
         }
 
-        creatDetector();
+        createDetector();
     }
 
     private void initView() {
@@ -91,8 +93,9 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         });
     }
 
-    private void creatDetector() {
-        detectorManager = new DetectorManager();
+    private void createDetector() {
+//        detectorManager = new DetectorManager();
+        detectorManager = new DetectorManagerMerge();
         detectorManager.init(this);
 
         bucketCounter = new BucketCounterV0();
@@ -191,7 +194,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         int sensorOrientation = 0;
         tracker.setFrameConfiguration(bitmap.getWidth(), bitmap.getHeight(), sensorOrientation);
 
-        List<Recognition> results = detectorManager.detectionImage(bitmap);
+        List<Recognition> results = detectorManager.detectionImage(CameraActivity.this,bitmap);
         Log.i(TAG, results.toString());
 
         tracker.trackResults(results, 0);

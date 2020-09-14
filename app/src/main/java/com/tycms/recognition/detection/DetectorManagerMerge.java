@@ -10,6 +10,8 @@ import android.graphics.RectF;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.tycms.recognition.util.Constants;
+
 import org.nelbds.nglite.exception.NGLiteException;
 import org.nelbds.nglite.func.ObjectDetector;
 import org.nelbds.nglite.func.Recognition;
@@ -127,28 +129,98 @@ public class DetectorManagerMerge {
     private List<Recognition> convertList(List<Recognition> results) {
         final List<Recognition> mappedRecognitions = new LinkedList<>();
 
-        float minimumConfidence = 0.8f;
-        float minimumConfidenceTruck = 0.6f;
+        float minimumConfidence_0 = Constants.CONFIDENCE_BUCKET_0;
+        float minimumConfidence_1 = Constants.CONFIDENCE_BUCKET_1;
+        float minimumConfidenceTruck = Constants.CONFIDENCE_TRUCK;
+
+        Recognition bucket0 = initRecognition();
+        Recognition bucket1 = initRecognition();
+        Recognition truck = initRecognition();
+
         for (final Recognition result : results) {
             final RectF location = result.getLocation();
-//            if (location != null && result.getConfidence() >= minimumConfidence) {
-//                cropToFrameTransform.mapRect(location);
-//                result.setLocation(location);
-//                mappedRecognitions.add(result);
-//            }
 
-            if (location != null && result.getConfidence() >= Math.min(minimumConfidence, minimumConfidenceTruck)) {
+            if (location != null && result.getConfidence() >= getMinValue(minimumConfidence_0, minimumConfidence_1, minimumConfidenceTruck)) {
                 cropToFrameTransform.mapRect(location);
                 result.setLocation(location);
-                if (result.getTitle().startsWith("bucket") && result.getConfidence() >= minimumConfidence) {
-                    mappedRecognitions.add(result);
-                } else if (result.getTitle().startsWith("Truck") && result.getConfidence() >= minimumConfidenceTruck) {
-                    mappedRecognitions.add(result);
+                String resultTitle = result.getTitle();
+                float resultConfidence = result.getConfidence();
+                if (resultTitle.startsWith("bucket0") && resultConfidence >= minimumConfidence_0) {
+                    if (resultConfidence > bucket0.getConfidence()) {
+                        bucket0 = result;
+                    }
+//                    mappedRecognitions.add(result);
+                } else if (resultTitle.startsWith("bucket1") && resultConfidence >= minimumConfidence_1) {
+                    if (resultConfidence > bucket1.getConfidence()) {
+                        bucket1 = result;
+                    }
+//                    mappedRecognitions.add(result);
+                } else if (resultTitle.startsWith("Truck") && resultConfidence >= minimumConfidenceTruck) {
+                    if (resultConfidence > truck.getConfidence()) {
+                        truck = result;
+                    }
+//                    mappedRecognitions.add(result);
                 }
             }
         }
+        addRecognitionBucket(mappedRecognitions, bucket0, bucket1);
+        addRecognitionTruck(mappedRecognitions, truck);
+
         return mappedRecognitions;
     }
+
+    private float getMinValue(float value1, float value2, float value3) {
+        float min = value1 < value2 ? value1 : value2;
+        return min < value3 ? min : value3;
+    }
+
+    private Recognition initRecognition() {
+        Recognition recognition = new Recognition("", "", 0f, null);
+        return recognition;
+    }
+
+    private void addRecognitionBucket(List<Recognition> list, Recognition bucket0, Recognition bucket1) {
+        if (bucket0.getConfidence() > 0 && bucket1.getConfidence() > 0) {
+            if (bucket0.getConfidence() >= bucket1.getConfidence()) {
+                list.add(bucket0);
+            } else {
+                list.add(bucket1);
+            }
+        } else if (bucket0.getConfidence() > 0) {
+            list.add(bucket0);
+        } else if (bucket1.getConfidence() > 0) {
+            list.add(bucket1);
+        }
+    }
+
+    private void addRecognitionTruck(List<Recognition> list, Recognition recognition) {
+        if (recognition.getConfidence() > 0) {
+            list.add(recognition);
+//            if (viewSet(recognition, Constants.TRUCK_TOP_LIMIT)) {
+//                list.add(recognition);
+//            }
+        }
+    }
+
+//    private boolean viewSet(Recognition recognition, int limit) {
+//        RectF rectF = recognition.getLocation();
+////        float top = rectF.top;
+////        float maxTop = Constants.VIDEO_VIEW_HEIGHT * ((limit - 1f) / limit);
+//
+//        float top = (rectF.top + rectF.bottom) / 2f;
+//        float maxTop = Constants.VIDEO_VIEW_HEIGHT * ((limit - 1f) / limit);
+//
+////        float width = rectF.right - rectF.left;
+//
+//        Log.i("viewSet", "top is: " + top + "   maxTop is:" + maxTop + " VIDEO_VIEW_HEIGHT is: " + Constants.VIDEO_VIEW_HEIGHT);
+//
+//        if (top < maxTop) {
+////        if (top < maxTop && width>300) {
+////        if (top < maxTop && rectF.bottom <= (Constants.VIDEO_VIEW_HEIGHT - 10)) {
+//            return true;
+//        }
+//        return false;
+//    }
 
 
     public static Bitmap loadImage(Context context, String fileName) {

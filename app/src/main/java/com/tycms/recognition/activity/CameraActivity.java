@@ -20,8 +20,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.app.AppCompatActivity;
 import com.tycms.recognition.R;
-import com.tycms.recognition.bucket.BucketCounterV0;
-import com.tycms.recognition.bucket.IBucketCounter;
+import com.tycms.recognition.bucket.BucketCounterV0Improve;
+import com.tycms.recognition.bucket.BucketCounterV0Improve;
 import com.tycms.recognition.customview.OverlayView;
 import com.tycms.recognition.detection.DetectorManagerMerge;
 import com.tycms.recognition.tracking.MultiBoxTrackerNgLite;
@@ -56,7 +56,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     private TextView txt_time;
     private TextView txt_count;
 
-    private IBucketCounter bucketCounter;
+    private BucketCounterV0Improve bucketCounter;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -98,7 +98,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         detectorManager = new DetectorManagerMerge();
         detectorManager.init(this);
 
-        bucketCounter = new BucketCounterV0();
+        bucketCounter = new BucketCounterV0Improve();
     }
 
     /**
@@ -176,8 +176,8 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
         // 数斗
-//        bucketCounter.feedRT(results);
-        bucketCounter.feedRT20200706(results);
+        bucketCounter.feedRT(results);
+//        bucketCounter.feedRT20200706(results);
 
         runOnUiThread(new Runnable() {
             @Override

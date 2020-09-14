@@ -14,7 +14,7 @@ public interface IBucketCounter {
 
     int feedOL(int[][] var1);
 
-    int feedRT20200706(List<Recognition> var1);
+//    int feedRT20200706(List<Recognition> var1);
 
     int getInternalCount();
 }

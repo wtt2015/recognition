@@ -3,4 +3,105 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
+
+    <color name="white">#ffffff</color>
+    <color name="green">#00ff00</color>
+    <color name="little_white">#88ffffff</color>
+    <color name="common_title_bg">#CA2C32</color>
+    <color name="layout_gray">#dedede</color>
+    <color name="text_gray">#666666</color>
+    <color name="background">#ffffff</color>
+
+    <!--公共标题栏或者醒目标题颜色-->
+    <color name="common_text_title_color">#333333</color>
+    <!--公共黑色文字颜色-->
+    <color name="common_text_color">#515151</color>
+    <color name="black_text_color">#515151</color>
+    <!--公共灰色未选中文字颜色-->
+    <color name="common_text_gray_color">#8E908F</color>
+    <!--公共黑色偏浅文字颜色-->
+    <color name="common_text_light_color">#7a7a7a</color>
+    <!--公共1dp浅色线颜色-->
+    <color name="common_viewline_color">#555c5c5c</color>
+    <!--公共8dp浅色间隔颜色-->
+    <color name="common_drivier_color">#EFEFEF</color>
+    <!--公共页面背景颜色-->
+    <color name="color_main">#EFEFEF</color>
+
+
+
+    <!-- 主界面底部导航栏颜色 -->
+    <color name="tab_bg_color">#fefefe</color>
+    <color name="index_item_color">#fea901</color>
+    <color name="pop_normal">#f9f9f9</color>
+    <color name="pop_press">#d3d3d3</color>
+    <color name="gray_text_color">#999999</color>
+    <!-- 导航栏蓝色 -->
+    <color name="common_blue">#1495f5</color>
+    <color name="title_color">@color/common_blue</color>
+    <color name="light_gray">#c2c2c2</color>
+    <color name="transparent">#00000000</color>
+
+    <!-- 黑色 -->
+    <color name="black">#000000</color>
+    <color name="color_green">#0cb29b</color>
+    <!-- 大背景颜色 -->
+    <color name="list_bg">#ecf0f1</color>
+
+    <color name="login_btn_press">#1b61a3</color>
+    <color name="login_btn_normal">#268ceb</color>
+
+    <color name="white_alpha_percent_45">#73ffffff</color>
+    <color name="base_white">#fffdf7ed</color>
+    <color name="gray_background">#f1f1f1</color>
+    <color name="background_floating_material_dark">#ff424242</color>
+    <!-- 极浅灰色 -->
+    <color name="gray_max">#ececec</color>
+    <color name="text_color_normal">#1c1c1c</color>
+    <color name="gray_line_color">#cccccc</color>
+    <color name="gray_bg">#f1f1f1</color>
+
+
+
+    <color name="translucent">#60000000</color>
+    <color name="target_divider_color">#ededed</color>
+    <color name="target_pressed_color">#e7e7e7</color>
+    <color name="target_bg_gray">#f5f5f5</color>
+    <color name="list_item_focus">#0a000000</color>
+    <color name="list_item_white_bg">@color/white_alpha_percent_45</color>
+    <color name="text_subtitle">#ff666666</color>
+    <color name="default_line_color">#e6e6e6</color>
+    <color name="base_brown">#ff403b37</color>
+    <color name="black_alpha_percent_30">#4d000000</color>
+    <color name="red_text_color">#FF0000</color>
+
+    <color name="ltgray_d3">#d3d3d3</color>
+    <color name="background_tab_pressed">#6633B5E5</color>
+
+
+    <color name="gray_shu_ru_kuang">#f9f9fb</color>
+    <color name="gray_item">#f6f6f6</color>
+
+    <!--日常管理-->
+    <color name="daily_blue">#1496f5</color>
+    <color name="daily_green">#469156</color>
+    <color name="daily_orange">#e48622</color>
+
+    <color name="touming">#00ffffff</color>
+    <color name="color_008cf2">#008cf2</color>
+
+    <color name="color_cccccc">#cccccc</color>
+    <color name="color_d7d7d7">#d7d7d7</color>
+    <color name="color_light_blue">#12b7f5</color>
+
+    <color name="color_44008cf2">#44008cf2</color>
+
+    <color name="enable_bg">#44999999</color>
+    <color name="color_light_blue_light">#d9efff</color>
+    <!--工程管理-->
+
+    <color name="light_blue">#6b80f0</color>
+    <color name="common_bottom_bg1">#3257A2</color>
+    <color name="common_bottom_bg">#28477e</color>
+
 </resources>

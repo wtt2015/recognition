@@ -10,11 +10,14 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Message;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,6 +33,9 @@ import org.nelbds.nglite.func.Recognition;
 import java.util.List;
 
 public class CameraActivity extends AppCompatActivity implements Camera.PreviewCallback {
+
+    TextView mAddTipTv;
+
     private final String TAG = "recognize";
 
     private static final int PERMISSIONS_REQUEST = 1;
@@ -57,6 +63,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     private TextView txt_count;
 
     private BucketCounterV0Improve bucketCounter;
+    private int mLastDouShu = 0;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -81,6 +88,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     }
 
     private void initView() {
+        mAddTipTv = findViewById(R.id.mAddTipTv);
         txt_time = findViewById(R.id.txt_time);
         txt_count = findViewById(R.id.txt_count);
         trackingOverlay = findViewById(R.id.tracking_overlay);
@@ -92,6 +100,14 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             }
         });
     }
+
+    private Handler mViewHandler = new Handler(){
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            super.handleMessage(msg);
+            mAddTipTv.setVisibility(View.GONE);
+        }
+    };
 
     private void createDetector() {
 //        detectorManager = new DetectorManager();
@@ -182,8 +198,17 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                int currentDouShu = bucketCounter.getInternalCount();
                 txt_time.setText("时间：" + lastProcessingTimeMs + "ms");
-                txt_count.setText("斗数：" + bucketCounter.getInternalCount());
+                txt_count.setText("斗数：" + currentDouShu);
+
+                if (currentDouShu > mLastDouShu) {
+                    mAddTipTv.setText(String.valueOf(currentDouShu));
+                    mAddTipTv.setVisibility(View.VISIBLE);
+                    mViewHandler.sendEmptyMessageDelayed(000,1000);
+                    mLastDouShu = currentDouShu;
+                }
+
             }
         });
     }

@@ -45,4 +45,7 @@ dependencies {
 
     implementation 'org.pytorch:pytorch_android:1.4.0'
     implementation 'org.pytorch:pytorch_android_torchvision:1.4.0'
+
+    //异步事件
+    implementation 'lib.gorden.rxbus2:rxbus:2.0.1'
 }

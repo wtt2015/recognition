@@ -25,16 +25,23 @@ import android.support.v7.app.AppCompatActivity;
 import com.tycms.recognition.R;
 import com.tycms.recognition.bucket.BucketCounterV0Improve;
 import com.tycms.recognition.bucket.BucketCounterV0Improve;
+import com.tycms.recognition.bucket.BucketCounterV0StateControl;
 import com.tycms.recognition.customview.OverlayView;
 import com.tycms.recognition.detection.DetectorManagerMerge;
 import com.tycms.recognition.tracking.MultiBoxTrackerNgLite;
 import com.tycms.recognition.util.BitmapUtil;
+import com.tycms.recognition.util.RxCode;
+
 import org.nelbds.nglite.func.Recognition;
 import java.util.List;
 
+import gorden.rxbus2.RxBus;
+import gorden.rxbus2.Subscribe;
+import gorden.rxbus2.ThreadMode;
+
 public class CameraActivity extends AppCompatActivity implements Camera.PreviewCallback {
 
-    TextView mAddTipTv;
+    private TextView mAddTipTv , mStateTipTv;
 
     private final String TAG = "recognize";
 
@@ -62,7 +69,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     private TextView txt_time;
     private TextView txt_count;
 
-    private BucketCounterV0Improve bucketCounter;
+    private BucketCounterV0StateControl bucketCounter;
     private int mLastDouShu = 0;
 
     @Override
@@ -74,8 +81,8 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         if (actionBar != null) {
             actionBar.hide();
         }
-
         setContentView(R.layout.activity_camera);
+        RxBus.get().register(this);
         initView();
 
         if (hasPermission()) {
@@ -87,8 +94,15 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         createDetector();
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RxBus.get().unRegister(this);
+    }
+
     private void initView() {
         mAddTipTv = findViewById(R.id.mAddTipTv);
+        mStateTipTv = findViewById(R.id.mStateTipTv);
         txt_time = findViewById(R.id.txt_time);
         txt_count = findViewById(R.id.txt_count);
         trackingOverlay = findViewById(R.id.tracking_overlay);
@@ -99,6 +113,46 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
                 tracker.draw(canvas);
             }
         });
+    }
+
+    @Subscribe(code = RxCode.STATE_INITIAL_STATE, threadMode = ThreadMode.MAIN)
+    public void STATE_INITIAL_STATE(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    @Subscribe(code = RxCode.STATE_DIGGING, threadMode = ThreadMode.MAIN)
+    public void STATE_DIGGING(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    @Subscribe(code = RxCode.STATE_TRANSPORTING, threadMode = ThreadMode.MAIN)
+    public void STATE_TRANSPORTING(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    @Subscribe(code = RxCode.STATE_READY_TO_LOAD, threadMode = ThreadMode.MAIN)
+    public void STATE_READY_TO_LOAD(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    @Subscribe(code = RxCode.STATE_LOADING, threadMode = ThreadMode.MAIN)
+    public void STATE_LOADING(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    @Subscribe(code = RxCode.STATE_LOADING_FINISH, threadMode = ThreadMode.MAIN)
+    public void STATE_LOADING_FINISH(String stateTip) {
+        setStateTipText(stateTip);
+    }
+
+    private void setStateTipText(String newTip) {
+        String add = "→";
+        String currentTip = mStateTipTv.getText().toString();
+        if (currentTip.contains(add)) {
+            currentTip = currentTip.substring(currentTip.indexOf(add) + 1);
+        }
+        mStateTipTv.setText(currentTip + add + newTip);
+
     }
 
     private Handler mViewHandler = new Handler(){
@@ -114,7 +168,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         detectorManager = new DetectorManagerMerge();
         detectorManager.init(this);
 
-        bucketCounter = new BucketCounterV0Improve();
+        bucketCounter = new BucketCounterV0StateControl();
     }
 
     /**

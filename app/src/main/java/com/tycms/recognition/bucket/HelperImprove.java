@@ -129,6 +129,60 @@ public class HelperImprove {
         return sCross > 0;
     }
 
+
+    /**
+     * 挖斗与卡车是否垂直方向相交
+     */
+    public static boolean isHaveIntersection(List<Recognition> list) {
+
+        RectF rect1 = list.get(0).getLocation();
+        RectF rect2 = list.get(1).getLocation();
+
+
+        float leftColumnMax = Math.max(rect1.left, rect2.left);
+        float rightColumnMin = Math.min(rect1.right, rect2.right);
+//        float upRowMax = Math.max(rect1.top, rect2.top);
+//        float downRowMin = Math.min(rect1.bottom, rect2.bottom);
+
+        if (leftColumnMax >= rightColumnMin ) {
+            Log.i("HaveIntersection", "直方向不相交");
+            return false;
+        }
+
+        float sCross = (rightColumnMin - leftColumnMax);
+        Log.i("HaveIntersection", "直方向相交 大小为：" + sCross);
+        return sCross > 0;
+    }
+
+    /**
+     * 获取出现的两次挖斗和卡车距离是远离还是靠近
+     *
+     * @param list0
+     * @param list1
+     * @return -1：靠近   0：距离不变  1：远离
+     */
+    public static int getFarAwayOrCloseTo(List<Recognition> list0, List<Recognition> list1) {
+
+        RectF bucket0 = list0.get(0).getLocation();
+        RectF truck0 = list0.get(1).getLocation();
+
+        RectF bucket1 = list1.get(0).getLocation();
+        RectF truck1 = list1.get(1).getLocation();
+
+        float distance0 = Math.abs((bucket0.left + bucket0.right) / 2f - (truck0.left + truck0.right) / 2f);
+        float distance1 = Math.abs((bucket1.left + bucket1.right) / 2f - (truck1.left + truck1.right) / 2f);
+
+        if(distance1<distance0){
+            return -1;
+        }else if (distance1==distance0){
+            return 0;
+        }else if (distance1>distance0){
+            return 1;
+        }
+        return 0;
+    }
+
+
     /**
      * 铲斗上边缘高于卡车，下边缘低于卡车（精度居中）
      */

@@ -13,4 +13,12 @@ public class Constants {
     public static int BUCKET_INTERVAL = 7;
 
 
+    public static final String INITIAL_STATE = "初始状态";
+    public static final String DIGGING = "挖掘中";
+    public static final String TRANSPORTING = "运送中";
+    public static final String READY_TO_LOAD = "准备装车";
+    public static final String LOADING = "装车";
+    public static final String LOADING_FINISH = "真实装车";
+
+
 }

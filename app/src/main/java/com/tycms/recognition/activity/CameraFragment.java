@@ -69,7 +69,7 @@ public class CameraFragment extends Fragment {
                 public void onSurfaceTextureAvailable(
                         final SurfaceTexture texture, final int width, final int height) {
 
-                    int index = getCameraId();
+                    int index = getCameraIdForTianYuan();
                     camera = Camera.open(index);
 
                     try {
@@ -196,6 +196,23 @@ public class CameraFragment extends Fragment {
     private int getCameraId() {
         CameraInfo ci = new CameraInfo();
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
+            Camera.getCameraInfo(i, ci);
+            if (ci.facing == CameraInfo.CAMERA_FACING_BACK) return i;
+        }
+        return -1; // No camera found
+    }
+
+    /**
+     * 天远设备目前只有一个摄像头，不分前后，获取到即使用
+     * @return
+     */
+    private int getCameraIdForTianYuan() {
+        CameraInfo ci = new CameraInfo();
+        int cameraCount = Camera.getNumberOfCameras();
+        if (cameraCount==1) {
+            return 0;
+        }
+        for (int i = 0; i < cameraCount; i++) {
             Camera.getCameraInfo(i, ci);
             if (ci.facing == CameraInfo.CAMERA_FACING_BACK) return i;
         }

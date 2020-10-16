@@ -99,6 +99,9 @@ public class CameraFragment extends Fragment {
                     Camera.Size s = camera.getParameters().getPreviewSize();
                     camera.addCallbackBuffer(new byte[getYUVByteSize(s.height, s.width)]);
 
+                    /**
+                     * 需要全屏的话注释掉这句代码(目前全屏有问题 预览尺寸和显示尺寸一致问题)
+                     */
                     textureView.setAspectRatio(s.height, s.width);
 
                     camera.startPreview();

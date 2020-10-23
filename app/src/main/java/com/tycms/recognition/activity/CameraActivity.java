@@ -59,6 +59,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     protected int previewWidth = 0;
     protected int previewHeight = 0;
     private Integer sensorOrientation;
+    private CameraFragment mCameraFragment;
 
 //    private DetectorManager detectorManager;
     private DetectorManagerMerge detectorManager;
@@ -212,13 +213,25 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         processImage();
     }
 
+    private Handler mDetectHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (isProcessingFrame ) {
+                return;
+            }
+            isProcessingFrame = true;
+            processImage();
+        }
+    };
+
     // 处理图像
     protected void processImage() {
         runInBackground(new Runnable() {
             @Override
             public void run() {
                 // todo 图像识别工作
-                recognize();
+                recognizeFromTextureView();
 
                 // 识别完成后，请求下一帧图像
                 if (postInferenceCallback != null) {
@@ -242,7 +255,11 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         rgbFrameBitmap = Bitmap.createBitmap(rgbFrameBitmap, 0, 0,
                 rgbFrameBitmap.getWidth(), rgbFrameBitmap.getHeight(), matrix, false);
 
-        final List<Recognition> results = detectionImage(rgbFrameBitmap);
+//        final List<Recognition> results = detectionImage(rgbFrameBitmap);
+
+        Bitmap bitmap = mCameraFragment.getAutoFitTextureView().getBitmap();
+        final List<Recognition> results = detectionImage(bitmap);
+
         long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 
         // 数斗
@@ -262,7 +279,41 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
                     mViewHandler.sendEmptyMessageDelayed(000,1000);
                     mLastDouShu = currentDouShu;
                 }
+                isProcessingFrame = false;
+                mDetectHandler.sendEmptyMessage(11111);
+            }
+        });
+    }
 
+
+    // 图像识别
+    protected void recognizeFromTextureView() {
+        final long startTime = SystemClock.uptimeMillis();
+
+        Bitmap bitmap = mCameraFragment.getAutoFitTextureView().getBitmap();
+        final List<Recognition> results = detectionImage(bitmap);
+
+        long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
+
+        // 数斗
+        bucketCounter.feedRT(results);
+//        bucketCounter.feedRT20200706(results);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                int currentDouShu = bucketCounter.getInternalCount();
+                txt_time.setText("时间：" + lastProcessingTimeMs + "ms");
+                txt_count.setText("斗数：" + currentDouShu);
+
+                if (currentDouShu > mLastDouShu) {
+                    mAddTipTv.setText(String.valueOf(currentDouShu));
+                    mAddTipTv.setVisibility(View.VISIBLE);
+                    mViewHandler.sendEmptyMessageDelayed(000,1000);
+                    mLastDouShu = currentDouShu;
+                }
+                isProcessingFrame = false;
+                mDetectHandler.sendEmptyMessage(11111);
             }
         });
     }
@@ -335,10 +386,17 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     }
 
     protected void setFragment() {
-        CameraFragment lcfragment = new CameraFragment();
-        lcfragment.init(this, R.layout.camera_connection_fragment, getDesiredPreviewFrameSize());
+        mCameraFragment = new CameraFragment();
+        mCameraFragment.init(this, R.layout.camera_connection_fragment, getDesiredPreviewFrameSize());
 
-        getSupportFragmentManager().beginTransaction().replace(R.id.container, lcfragment).commit();
+        getSupportFragmentManager().beginTransaction().replace(R.id.container, mCameraFragment).commit();
+
+        mCameraFragment.setDetectInterface(new CameraFragment.DetectInterface() {
+            @Override
+            public void onStartDetect() {
+                mDetectHandler.sendEmptyMessage(11111);
+            }
+        });
     }
 
     private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);

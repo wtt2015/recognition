@@ -1,12 +1,20 @@
 package com.tycms.recognition.activity;
 
+import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
+import android.media.CamcorderProfile;
+import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.LocalBroadcastManager;
+import android.text.format.DateUtils;
+import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.LayoutInflater;
@@ -14,13 +22,20 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
+
 import com.tycms.recognition.R;
 import com.tycms.recognition.customview.AutoFitTextureView;
+import com.tycms.recognition.util.DateTimeUtil;
+
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class CameraFragment extends Fragment {
     /**
@@ -47,6 +62,11 @@ public class CameraFragment extends Fragment {
      */
     private AutoFitTextureView textureView;
 
+    private String mVideoName;
+    private File mVecordFile;
+    private MediaRecorder mMediaRecorder;
+    private Timer mTimer = new Timer();
+
     private int getYUVByteSize(final int width, final int height) {
         // The luminance plane requires 1 byte per pixel.
         final int ySize = width * height;
@@ -58,6 +78,9 @@ public class CameraFragment extends Fragment {
         return ySize + uvSize;
     }
 
+    public AutoFitTextureView getAutoFitTextureView() {
+        return textureView;
+    }
 
     /**
      * {@link TextureView.SurfaceTextureListener} handles several lifecycle events on a {@link
@@ -103,8 +126,12 @@ public class CameraFragment extends Fragment {
                      * 需要全屏的话注释掉这句代码(目前全屏有问题 预览尺寸和显示尺寸一致问题)
                      */
                     textureView.setAspectRatio(s.height, s.width);
-
                     camera.startPreview();
+                    mDetectInterface.onStartDetect();
+
+                    startRecord();
+                    long indexVideo = 1000 * 60 * 20;
+                    mTimer.schedule(timerTask, indexVideo, indexVideo);
                 }
 
                 @Override
@@ -121,6 +148,125 @@ public class CameraFragment extends Fragment {
                 public void onSurfaceTextureUpdated(final SurfaceTexture texture) {
                 }
             };
+
+    public interface DetectInterface {
+        void onStartDetect();
+    }
+
+    private DetectInterface mDetectInterface;
+
+    public void setDetectInterface(DetectInterface detectInterface) {
+        mDetectInterface = detectInterface;
+    }
+
+
+    /**
+     * 开始录制
+     */
+    private void startRecord() {
+        //这是是判断视频文件有没有创建,如果没有就返回
+        boolean creakOk = createRecordDir();
+        if (!creakOk) {
+            return;
+        }
+
+        try {
+            setConfigRecord();
+            mMediaRecorder.prepare();
+            mMediaRecorder.start();
+
+
+        } catch (Exception e) {
+            //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
+            Log.i("wtt", "startRecord: " + e.toString());
+        }
+    }
+
+    TimerTask timerTask = new TimerTask() {
+        @Override
+        public void run() {
+            Log.i("wtt", "定时到了");
+            saveVideo();
+            startRecord();
+        }
+    };
+
+    private void saveVideo() {
+        try {
+            if (mMediaRecorder != null) {
+                mMediaRecorder.stop();
+                mMediaRecorder.reset();
+                Log.i("wtt", "" + mVecordFile.toString());
+            }
+        } catch (Exception ex) {
+            //Toast.makeText(getApplicationContext(),ex.getMessage(),1).show();
+            Log.i("wtt", "saveVideo: " + ex.toString());
+        }
+    }
+
+
+    private boolean createRecordDir() {
+        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
+            Toast.makeText(getContext(), "SD卡不存在!", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        File sampleDir = new File("/sdcard/myVideo/");
+        if (!sampleDir.exists()) {
+            sampleDir.mkdirs();
+        }
+        mVideoName = "VID_" + DateTimeUtil.getStringDate1() + "-" + SystemClock.uptimeMillis() + ".mp4";
+        mVecordFile = new File(sampleDir, mVideoName);
+        return true;
+    }
+
+    private void setConfigRecord() {
+        mMediaRecorder = new MediaRecorder();
+        camera.unlock();
+        mMediaRecorder.setCamera(camera);
+
+//        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);//1.设置采集声音
+        //设置采集图像
+        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+        //2.设置视频，音频的输出格式 mp4
+        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+        //3.设置音频的编码格式
+//        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+        //设置图像的编码格式
+        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
+        //录像角度
+        mMediaRecorder.setOrientationHint(90);
+        //使用SurfaceView预览
+//        Surface surface = new Surface(textureView.getSurfaceTexture());
+//        mMediaRecorder.setPreviewDisplay(surface);
+
+//        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+//
+//        mMediaRecorder.setAudioEncodingBitRate(44100);
+//        if (mProfile.videoBitRate > 2 * 1024 * 1024) {
+//            mMediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);
+//        } else {
+//            mMediaRecorder.setVideoEncodingBitRate(1024 * 1024);
+//        }
+//        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
+//        mMediaRecorder.setVideoSize(1280, 720);
+
+        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
+
+        mMediaRecorder.setAudioEncodingBitRate(10000000);
+        if (mProfile.videoBitRate > 2 * 1024 * 1024) {
+            mMediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);
+        } else {
+            mMediaRecorder.setVideoEncodingBitRate(1024 * 1024);
+        }
+        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
+        mMediaRecorder.setVideoSize(720, 480);
+
+        mMediaRecorder.setOutputFile(mVecordFile.getAbsolutePath());
+
+    }
+
+
     /**
      * An additional thread for running tasks that shouldn't block the UI.
      */
@@ -207,12 +353,13 @@ public class CameraFragment extends Fragment {
 
     /**
      * 天远设备目前只有一个摄像头，不分前后，获取到即使用
+     *
      * @return
      */
     private int getCameraIdForTianYuan() {
         CameraInfo ci = new CameraInfo();
         int cameraCount = Camera.getNumberOfCameras();
-        if (cameraCount==1) {
+        if (cameraCount == 1) {
             return 0;
         }
         for (int i = 0; i < cameraCount; i++) {

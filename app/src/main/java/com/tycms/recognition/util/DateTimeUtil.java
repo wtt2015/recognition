@@ -15,13 +15,22 @@ public class DateTimeUtil {
      */
     public static String getStringDate1() {
         Date currentTime = new Date();
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String dateString = formatter.format(currentTime);
         return dateString;
     }
 
+    public static String timeAdd(long millisecond) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date currentTime = new Date();
+        Date afterDate = new Date(currentTime.getTime() + millisecond);
+        String dateString = formatter.format(afterDate);
+        return dateString;
+    }
+
+
     //时间转换类，将得到的音乐时间毫秒转换为时分秒格式
-    public static  String formatTime(int length) {
+    public static String formatTime(int length) {
         Date date = new Date(length);
         SimpleDateFormat sdf = new SimpleDateFormat("mm:ss");
         String totalTime = sdf.format(date);

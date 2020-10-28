@@ -10,7 +10,6 @@ import org.nelbds.nglite.func.Recognition;
 import java.util.ArrayList;
 import java.util.List;
 
-import gorden.rxbus2.RxBus;
 
 /**
  * Created by WangTuan on 2020/9/21.
@@ -32,6 +31,16 @@ public class BucketCounterV0StateControl {
 
     public BucketCounterV0StateControl() {
         this.reset();
+    }
+
+    public interface BucketCounterInterface {
+        void updateState(long millisecond, String state);
+    }
+
+    private BucketCounterInterface mBucketCounterInterface;
+
+    public void setBucketCounterInterface(BucketCounterInterface bucketCounterInterface) {
+        this.mBucketCounterInterface = bucketCounterInterface;
     }
 
     public void reset() {
@@ -72,7 +81,6 @@ public class BucketCounterV0StateControl {
 //        }
 
 
-
         if (mLoadingState == LoadingState.TRANSPORTING || mLoadingState == LoadingState.READY_TO_LOAD) {
 
             if (recognition != null && recognition.size() == 2) {
@@ -80,12 +88,14 @@ public class BucketCounterV0StateControl {
                 if (mLoadingState == LoadingState.TRANSPORTING) {
                     Log.i(TAG_ShuDou, "运送中发现卡车和挖斗 →准备装车");
                     mLoadingState = LoadingState.READY_TO_LOAD;
-                    RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
-                }else if(mLoadingState == LoadingState.READY_TO_LOAD){
+//                    RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
+                    updateState(Constants.READY_TO_LOAD);
+                } else if (mLoadingState == LoadingState.READY_TO_LOAD) {
                     if (HelperImprove.isHaveIntersection(recognition)) {
                         Log.i(TAG_ShuDou, "准备装车中出现交集 →准备装车");
                         mLoadingState = LoadingState.READY_TO_LOAD;
-                        RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
+//                        RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
+                        updateState(Constants.READY_TO_LOAD);
                     } else {
                         mDistanceComparisonCount++;
                         if (mDistanceComparisonCount == 1) {
@@ -93,7 +103,8 @@ public class BucketCounterV0StateControl {
                         } else if (mDistanceComparisonCount == 2) {
                             if (HelperImprove.getFarAwayOrCloseTo(mList, recognition) == -1) {
                                 mLoadingState = LoadingState.READY_TO_LOAD;
-                                RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
+//                                RxBus.get().send(RxCode.STATE_READY_TO_LOAD, Constants.READY_TO_LOAD);
+                                updateState(Constants.READY_TO_LOAD);
                                 Log.i(TAG_ShuDou, "准备装车中 距离靠近 →准备装车");
                             }
                             mDistanceComparisonCount = 0;
@@ -114,7 +125,8 @@ public class BucketCounterV0StateControl {
                 } else if (mDistanceComparisonCount == 2) {
                     if (HelperImprove.getFarAwayOrCloseTo(mList, recognition) == 1) {
                         mLoadingState = LoadingState.LOADING;
-                        RxBus.get().send(RxCode.STATE_LOADING, Constants.LOADING);
+//                        RxBus.get().send(RxCode.STATE_LOADING, Constants.LOADING);
+                        updateState(Constants.LOADING);
                         Log.i(TAG_ShuDou, "准备装车中 距离远离 →装车后状态");
                     }
                     mDistanceComparisonCount = 0;
@@ -128,7 +140,8 @@ public class BucketCounterV0StateControl {
                         noTruckNum++;
                         if (noTruckNum >= 2) {
                             mLoadingState = LoadingState.LOADING;
-                            RxBus.get().send(RxCode.STATE_LOADING, Constants.LOADING);
+//                            RxBus.get().send(RxCode.STATE_LOADING, Constants.LOADING);
+                            updateState(Constants.LOADING);
                             Log.i(TAG_ShuDou, "准备装车中 发现2次无卡车 →装车后状态");
                             noTruckNum = 0;
                         }
@@ -147,7 +160,8 @@ public class BucketCounterV0StateControl {
                 if (verticalAddNum >= 2) {
                     mLoadingState = LoadingState.DIGGING;
                     Log.i(TAG_ShuDou, "初始态→挖掘状态");
-                    RxBus.get().send(RxCode.STATE_DIGGING, Constants.DIGGING);
+//                    RxBus.get().send(RxCode.STATE_DIGGING, Constants.DIGGING);
+                    updateState(Constants.DIGGING);
                 }
             }
 
@@ -158,14 +172,16 @@ public class BucketCounterV0StateControl {
                 if (verticalAddNum >= 2) {
                     mLoadingState = LoadingState.INITIAL_STATE;
                     Log.i(TAG_ShuDou, "运送状态中出现2次竖斗 判断为卸货 →初始状态");
-                    RxBus.get().send(RxCode.STATE_INITIAL_STATE, Constants.INITIAL_STATE);
+//                    RxBus.get().send(RxCode.STATE_INITIAL_STATE, Constants.INITIAL_STATE);
+                    updateState(Constants.INITIAL_STATE);
                 }
             }
 
             if (mLoadingState == LoadingState.LOADING) {
                 if (verticalAddNum >= 2) {
                     ++this.bucketSum;
-                    RxBus.get().send(RxCode.STATE_LOADING_FINISH, Constants.LOADING_FINISH);
+//                    RxBus.get().send(RxCode.STATE_LOADING_FINISH, Constants.LOADING_FINISH);
+                    updateState(Constants.LOADING_FINISH);
                     Log.i(TAG_ShuDou, "装车后出现2次竖斗 判断为装车" + "bucketSum +1  bucketSum= " + bucketSum + " →初始状态");
                     ret = 1;
                     shuDouReset();
@@ -181,7 +197,7 @@ public class BucketCounterV0StateControl {
             /**
              * 挖掘中和装车后出现两次平斗视为运送中
              */
-            if (mLoadingState == LoadingState.DIGGING ||mLoadingState == LoadingState.LOADING ) {
+            if (mLoadingState == LoadingState.DIGGING || mLoadingState == LoadingState.LOADING) {
                 horizontalAddNum++;
                 if (horizontalAddNum >= 2) {
                     if (mLoadingState == LoadingState.DIGGING) {
@@ -190,7 +206,8 @@ public class BucketCounterV0StateControl {
                         Log.i(TAG_ShuDou, "疑似装车后出现2次平斗 →运送中");
                     }
                     mLoadingState = LoadingState.TRANSPORTING;
-                    RxBus.get().send(RxCode.STATE_TRANSPORTING, Constants.TRANSPORTING);
+//                    RxBus.get().send(RxCode.STATE_TRANSPORTING, Constants.TRANSPORTING);
+                    updateState(Constants.TRANSPORTING);
                     horizontalAddNum = 0;
                 }
             }
@@ -212,5 +229,13 @@ public class BucketCounterV0StateControl {
         mList.clear();
         mLoadingState = LoadingState.INITIAL_STATE;
     }
+
+    private void updateState( String state) {
+        if (mBucketCounterInterface != null) {
+            long millisecond = System.currentTimeMillis();
+            mBucketCounterInterface.updateState(millisecond, state);
+        }
+    }
+
 }
 

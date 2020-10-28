@@ -5,6 +5,10 @@ package com.tycms.recognition.util;
  */
 public class Constants {
 
+    public static boolean isHelmet = false; //是否是头盔
+    public static boolean isVideotape = false; //是否录像
+
+
     public static float CONFIDENCE_BUCKET_1 = 0.8f;
     public static float CONFIDENCE_BUCKET_0 = 0.4f;
     public static float CONFIDENCE_TRUCK = 0.4f;

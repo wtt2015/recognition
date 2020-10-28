@@ -14,6 +14,7 @@ import android.os.Message;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -22,6 +23,7 @@ import android.view.WindowManager;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.support.v7.app.AppCompatActivity;
+
 import com.tycms.recognition.R;
 import com.tycms.recognition.bucket.BucketCounterV0Improve;
 import com.tycms.recognition.bucket.BucketCounterV0Improve;
@@ -30,9 +32,12 @@ import com.tycms.recognition.customview.OverlayView;
 import com.tycms.recognition.detection.DetectorManagerMerge;
 import com.tycms.recognition.tracking.MultiBoxTrackerNgLite;
 import com.tycms.recognition.util.BitmapUtil;
+import com.tycms.recognition.util.Constants;
 import com.tycms.recognition.util.RxCode;
+import com.tycms.recognition.util.VideoUtil;
 
 import org.nelbds.nglite.func.Recognition;
+
 import java.util.List;
 
 import gorden.rxbus2.RxBus;
@@ -41,7 +46,7 @@ import gorden.rxbus2.ThreadMode;
 
 public class CameraActivity extends AppCompatActivity implements Camera.PreviewCallback {
 
-    private TextView mAddTipTv , mStateTipTv;
+    private TextView mAddTipTv, mStateTipTv;
 
     private final String TAG = "recognize";
 
@@ -61,7 +66,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     private Integer sensorOrientation;
     private CameraFragment mCameraFragment;
 
-//    private DetectorManager detectorManager;
+    //    private DetectorManager detectorManager;
     private DetectorManagerMerge detectorManager;
 
 
@@ -70,8 +75,9 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     private TextView txt_time;
     private TextView txt_count;
 
-    private BucketCounterV0StateControl bucketCounter;
+    public static BucketCounterV0StateControl bucketCounter;
     private int mLastDouShu = 0;
+    private boolean isFirstIn = true;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -83,7 +89,6 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             actionBar.hide();
         }
         setContentView(R.layout.activity_camera);
-        RxBus.get().register(this);
         initView();
 
         if (hasPermission()) {
@@ -98,7 +103,10 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        RxBus.get().unRegister(this);
+        if (Constants.isVideotape) {
+            mCameraFragment.getVideoUtil().saveVideo();
+            mCameraFragment.stopTimer();
+        }
     }
 
     private void initView() {
@@ -116,47 +124,30 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         });
     }
 
-    @Subscribe(code = RxCode.STATE_INITIAL_STATE, threadMode = ThreadMode.MAIN)
-    public void STATE_INITIAL_STATE(String stateTip) {
-        setStateTipText(stateTip);
-    }
 
-    @Subscribe(code = RxCode.STATE_DIGGING, threadMode = ThreadMode.MAIN)
-    public void STATE_DIGGING(String stateTip) {
-        setStateTipText(stateTip);
-    }
-
-    @Subscribe(code = RxCode.STATE_TRANSPORTING, threadMode = ThreadMode.MAIN)
-    public void STATE_TRANSPORTING(String stateTip) {
-        setStateTipText(stateTip);
-    }
-
-    @Subscribe(code = RxCode.STATE_READY_TO_LOAD, threadMode = ThreadMode.MAIN)
-    public void STATE_READY_TO_LOAD(String stateTip) {
-        setStateTipText(stateTip);
-    }
-
-    @Subscribe(code = RxCode.STATE_LOADING, threadMode = ThreadMode.MAIN)
-    public void STATE_LOADING(String stateTip) {
-        setStateTipText(stateTip);
-    }
-
-    @Subscribe(code = RxCode.STATE_LOADING_FINISH, threadMode = ThreadMode.MAIN)
-    public void STATE_LOADING_FINISH(String stateTip) {
-        setStateTipText(stateTip);
-    }
-
-    private void setStateTipText(String newTip) {
+    private void setStateTipText(long millisecondIndex, String newTip) {
         String add = "→";
         String currentTip = mStateTipTv.getText().toString();
+        String oldTip = currentTip;
         if (currentTip.contains(add)) {
             currentTip = currentTip.substring(currentTip.indexOf(add) + 1);
         }
-        mStateTipTv.setText(currentTip + add + newTip);
+        String tip = currentTip + add + newTip;
+        if (!TextUtils.equals(oldTip, tip)) {
+            addResultStringBuilder(millisecondIndex, "state:" + tip);
+        }
+        mStateTipTv.setText(tip);
 
     }
 
-    private Handler mViewHandler = new Handler(){
+    private void addResultStringBuilder(long millisecondIndex, String content) {
+        if (!TextUtils.isEmpty(VideoUtil.mReStringBuilder.toString())) {
+            VideoUtil.mReStringBuilder.append("\n");
+        }
+        VideoUtil.mReStringBuilder.append(millisecondIndex + ":" + content);
+    }
+
+    private Handler mViewHandler = new Handler() {
         @Override
         public void handleMessage(@NonNull Message msg) {
             super.handleMessage(msg);
@@ -170,6 +161,12 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         detectorManager.init(this);
 
         bucketCounter = new BucketCounterV0StateControl();
+        bucketCounter.setBucketCounterInterface(new BucketCounterV0StateControl.BucketCounterInterface() {
+            @Override
+            public void updateState(long millisecond, String state) {
+                setStateTipText(millisecond - VideoUtil.mStartTimeMillis, state);
+            }
+        });
     }
 
     /**
@@ -213,11 +210,11 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         processImage();
     }
 
-    private Handler mDetectHandler = new Handler(){
+    private Handler mDetectHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (isProcessingFrame ) {
+            if (isProcessingFrame) {
                 return;
             }
             isProcessingFrame = true;
@@ -231,7 +228,15 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             @Override
             public void run() {
                 // todo 图像识别工作
-                recognizeFromTextureView();
+
+                if (Constants.isVideotape) {
+                    //开启录像 从控件获取图像
+                    recognizeFromTextureView();
+                } else {
+                    //不开启录像 从摄像头获取图片
+                    recognize();
+                }
+
 
                 // 识别完成后，请求下一帧图像
                 if (postInferenceCallback != null) {
@@ -276,7 +281,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
                 if (currentDouShu > mLastDouShu) {
                     mAddTipTv.setText(String.valueOf(currentDouShu));
                     mAddTipTv.setVisibility(View.VISIBLE);
-                    mViewHandler.sendEmptyMessageDelayed(000,1000);
+                    mViewHandler.sendEmptyMessageDelayed(000, 1000);
                     mLastDouShu = currentDouShu;
                 }
                 isProcessingFrame = false;
@@ -309,8 +314,9 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
                 if (currentDouShu > mLastDouShu) {
                     mAddTipTv.setText(String.valueOf(currentDouShu));
                     mAddTipTv.setVisibility(View.VISIBLE);
-                    mViewHandler.sendEmptyMessageDelayed(000,1000);
+                    mViewHandler.sendEmptyMessageDelayed(000, 1000);
                     mLastDouShu = currentDouShu;
+                    addResultStringBuilder(System.currentTimeMillis() - VideoUtil.mStartTimeMillis, "douShu:" + currentDouShu);
                 }
                 isProcessingFrame = false;
                 mDetectHandler.sendEmptyMessage(11111);
@@ -324,14 +330,18 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         int sensorOrientation = 0;
         tracker.setFrameConfiguration(bitmap.getWidth(), bitmap.getHeight(), sensorOrientation);
 
-        List<Recognition> results = detectorManager.detectionImage(CameraActivity.this,bitmap);
+        List<Recognition> results = detectorManager.detectionImage(CameraActivity.this, bitmap);
         Log.i(TAG, results.toString());
+        if (results != null && results.size() > 0) {
+            addResultStringBuilder(System.currentTimeMillis() - VideoUtil.mStartTimeMillis, "result:" + results.toString());
+        }
 
         tracker.trackResults(results, 0);
         trackingOverlay.postInvalidate();
 
         return results;
     }
+
 
     public void onPreviewSizeChosen(final Size size, final int rotation) {
         previewWidth = size.getWidth();
@@ -361,10 +371,17 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
     @Override
     public synchronized void onResume() {
         super.onResume();
-
+        isProcessingFrame = false;
         handlerThread = new HandlerThread("inference");
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
+
+        if (isFirstIn) {
+            isFirstIn = false;
+        } else {
+            isProcessingFrame = false;
+            mDetectHandler.sendEmptyMessage(11111);
+        }
     }
 
     @Override
@@ -379,6 +396,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
         }
     }
 
+
     protected synchronized void runInBackground(final Runnable r) {
         if (handler != null) {
             handler.post(r);
@@ -391,12 +409,17 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
 
         getSupportFragmentManager().beginTransaction().replace(R.id.container, mCameraFragment).commit();
 
-        mCameraFragment.setDetectInterface(new CameraFragment.DetectInterface() {
-            @Override
-            public void onStartDetect() {
-                mDetectHandler.sendEmptyMessage(11111);
-            }
-        });
+
+        //录像模式开启以下功能
+        if (Constants.isVideotape) {
+            mCameraFragment.setDetectInterface(new CameraFragment.DetectInterface() {
+                @Override
+                public void onStartDetect() {
+                    mDetectHandler.sendEmptyMessage(11111);
+                }
+            });
+        }
+
     }
 
     private static final Size DESIRED_PREVIEW_SIZE = new Size(640, 480);
@@ -437,7 +460,7 @@ public class CameraActivity extends AppCompatActivity implements Camera.PreviewC
             if (shouldShowRequestPermissionRationale(PERMISSION_CAMERA)) {
                 Toast.makeText(this, "Camera permission is required for this demo", Toast.LENGTH_SHORT).show();
             }
-            requestPermissions(new String[]{PERMISSION_CAMERA,PERMISSION_WRITE,PERMISSION_READ}, PERMISSIONS_REQUEST);
+            requestPermissions(new String[]{PERMISSION_CAMERA, PERMISSION_WRITE, PERMISSION_READ}, PERMISSIONS_REQUEST);
         }
     }
     /*********************************许可相关**********************************/

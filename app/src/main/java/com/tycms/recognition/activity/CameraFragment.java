@@ -1,6 +1,5 @@
 package com.tycms.recognition.activity;
 
-import android.content.Intent;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
@@ -12,8 +11,6 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -26,7 +23,9 @@ import android.widget.Toast;
 
 import com.tycms.recognition.R;
 import com.tycms.recognition.customview.AutoFitTextureView;
+import com.tycms.recognition.util.Constants;
 import com.tycms.recognition.util.DateTimeUtil;
+import com.tycms.recognition.util.VideoUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,9 +61,8 @@ public class CameraFragment extends Fragment {
      */
     private AutoFitTextureView textureView;
 
-    private String mVideoName;
-    private File mVecordFile;
-    private MediaRecorder mMediaRecorder;
+    private VideoUtil mVideoUtil;
+
     private Timer mTimer = new Timer();
 
     private int getYUVByteSize(final int width, final int height) {
@@ -80,6 +78,10 @@ public class CameraFragment extends Fragment {
 
     public AutoFitTextureView getAutoFitTextureView() {
         return textureView;
+    }
+
+    public VideoUtil getVideoUtil() {
+        return mVideoUtil;
     }
 
     /**
@@ -111,7 +113,8 @@ public class CameraFragment extends Fragment {
                         Size previewSize =
                                 chooseOptimalSize(sizes, desiredSize.getWidth(), desiredSize.getHeight());
                         parameters.setPreviewSize(previewSize.getWidth(), previewSize.getHeight());
-                        camera.setDisplayOrientation(90);//摄像头方向手机90度；头盔0度 ；开发板 前90 后270
+//                        camera.setDisplayOrientation(90);//摄像头方向手机90度；头盔0度 ；开发板 前90 后270
+                        camera.setDisplayOrientation(Constants.isHelmet ? 0 : 90);//摄像头方向手机90度；头盔0度 ；开发板 前90 后270
                         camera.setParameters(parameters);
                         camera.setPreviewTexture(texture);
                     } catch (IOException exception) {
@@ -127,11 +130,16 @@ public class CameraFragment extends Fragment {
                      */
                     textureView.setAspectRatio(s.height, s.width);
                     camera.startPreview();
-                    mDetectInterface.onStartDetect();
 
-                    startRecord();
-                    long indexVideo = 1000 * 60 * 20;
-                    mTimer.schedule(timerTask, indexVideo, indexVideo);
+                    if (Constants.isVideotape) {
+                        //开启录像并保存到本地
+                        mDetectInterface.onStartDetect();
+                        mVideoUtil = new VideoUtil(getContext(), camera);
+                        mVideoUtil.startRecord();
+                        mTimer.schedule(timerTask, VideoUtil.mVideoDuration, VideoUtil.mVideoDuration);
+                    }
+
+
                 }
 
                 @Override
@@ -160,111 +168,14 @@ public class CameraFragment extends Fragment {
     }
 
 
-    /**
-     * 开始录制
-     */
-    private void startRecord() {
-        //这是是判断视频文件有没有创建,如果没有就返回
-        boolean creakOk = createRecordDir();
-        if (!creakOk) {
-            return;
-        }
-
-        try {
-            setConfigRecord();
-            mMediaRecorder.prepare();
-            mMediaRecorder.start();
-
-
-        } catch (Exception e) {
-            //Toast.makeText(getApplicationContext(),e.getMessage(),Toast.LENGTH_LONG).show();
-            Log.i("wtt", "startRecord: " + e.toString());
-        }
-    }
-
     TimerTask timerTask = new TimerTask() {
         @Override
         public void run() {
             Log.i("wtt", "定时到了");
-            saveVideo();
-            startRecord();
+            mVideoUtil.saveVideo();
+            mVideoUtil.startRecord();
         }
     };
-
-    private void saveVideo() {
-        try {
-            if (mMediaRecorder != null) {
-                mMediaRecorder.stop();
-                mMediaRecorder.reset();
-                Log.i("wtt", "" + mVecordFile.toString());
-            }
-        } catch (Exception ex) {
-            //Toast.makeText(getApplicationContext(),ex.getMessage(),1).show();
-            Log.i("wtt", "saveVideo: " + ex.toString());
-        }
-    }
-
-
-    private boolean createRecordDir() {
-        if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {
-            Toast.makeText(getContext(), "SD卡不存在!", Toast.LENGTH_SHORT).show();
-            return false;
-        }
-
-        File sampleDir = new File("/sdcard/myVideo/");
-        if (!sampleDir.exists()) {
-            sampleDir.mkdirs();
-        }
-        mVideoName = "VID_" + DateTimeUtil.getStringDate1() + "-" + SystemClock.uptimeMillis() + ".mp4";
-        mVecordFile = new File(sampleDir, mVideoName);
-        return true;
-    }
-
-    private void setConfigRecord() {
-        mMediaRecorder = new MediaRecorder();
-        camera.unlock();
-        mMediaRecorder.setCamera(camera);
-
-//        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);//1.设置采集声音
-        //设置采集图像
-        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-        //2.设置视频，音频的输出格式 mp4
-        mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
-        //3.设置音频的编码格式
-//        mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
-        //设置图像的编码格式
-        mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
-        //录像角度
-        mMediaRecorder.setOrientationHint(90);
-        //使用SurfaceView预览
-//        Surface surface = new Surface(textureView.getSurfaceTexture());
-//        mMediaRecorder.setPreviewDisplay(surface);
-
-//        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
-//
-//        mMediaRecorder.setAudioEncodingBitRate(44100);
-//        if (mProfile.videoBitRate > 2 * 1024 * 1024) {
-//            mMediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);
-//        } else {
-//            mMediaRecorder.setVideoEncodingBitRate(1024 * 1024);
-//        }
-//        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
-//        mMediaRecorder.setVideoSize(1280, 720);
-
-        CamcorderProfile mProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_480P);
-
-        mMediaRecorder.setAudioEncodingBitRate(10000000);
-        if (mProfile.videoBitRate > 2 * 1024 * 1024) {
-            mMediaRecorder.setVideoEncodingBitRate(2 * 1024 * 1024);
-        } else {
-            mMediaRecorder.setVideoEncodingBitRate(1024 * 1024);
-        }
-        mMediaRecorder.setVideoFrameRate(mProfile.videoFrameRate);
-        mMediaRecorder.setVideoSize(720, 480);
-
-        mMediaRecorder.setOutputFile(mVecordFile.getAbsolutePath());
-
-    }
 
 
     /**
@@ -304,13 +215,20 @@ public class CameraFragment extends Fragment {
         } else {
             textureView.setSurfaceTextureListener(surfaceTextureListener);
         }
+
     }
 
     @Override
     public void onPause() {
-        stopCamera();
+//        stopCamera();
         stopBackgroundThread();
         super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        stopCamera();
     }
 
     /**
@@ -409,6 +327,17 @@ public class CameraFragment extends Fragment {
         public int compare(final Size lhs, final Size rhs) {
             // We cast here to ensure the multiplications won't overflow
             return Long.signum((long) lhs.getWidth() * lhs.getHeight() - (long) rhs.getWidth() * rhs.getHeight());
+        }
+    }
+
+    public void stopTimer(){
+        if (mTimer!=null) {
+            mTimer.cancel();
+            mTimer = null;
+        }
+        if (timerTask != null) {
+            timerTask.cancel();
+            timerTask = null;
         }
     }
 }

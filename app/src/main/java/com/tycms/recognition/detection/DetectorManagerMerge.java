@@ -28,8 +28,8 @@ import java.util.List;
  */
 public class DetectorManagerMerge {
     private final String TAG = "DetectorManagerMerge";
-    private String TF_OD_API_MODEL_FILE = "detectOneModel.tflite";
-    private String TF_OD_API_LABELS_FILE = "ty_labelmap_onemodel.txt";
+    private String TF_OD_API_MODEL_FILE = "detect_20101030.tflite";
+    private String TF_OD_API_LABELS_FILE = "tianyuan_labels.txt";
 
     private ObjectDetector detector;
     private Matrix cropToFrameTransform;
@@ -61,10 +61,6 @@ public class DetectorManagerMerge {
             results = detector.recognizeImage(convertPic(bitmap));
             long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
             Log.i("shuDou","实际耗时："+lastProcessingTimeMs+"ms");
-        } catch (NGLiteException e) {
-            Log.i(TAG, "识别异常");
-            results = new ArrayList<>();
-            e.printStackTrace();
         } catch (Exception e) {
             Log.i("识别异常", "识别异常");
             results = new ArrayList<>();

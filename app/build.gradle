@@ -39,9 +39,14 @@ dependencies {
 
 //    implementation 'org.tensorflow:tensorflow-lite:0.0.0-nightly'
 //    implementation 'org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly'
-    implementation "org.tensorflow:tensorflow-lite:1.12.0"
-    implementation "org.tensorflow:tensorflow-lite-gpu:1.14.0"
-    implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
+
+//    implementation "org.tensorflow:tensorflow-lite:1.12.0"
+//    implementation "org.tensorflow:tensorflow-lite-gpu:1.14.0"
+//    implementation 'org.tensorflow:tensorflow-lite-support:0.0.0-nightly'
+
+    implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
+    implementation ('org.tensorflow:tensorflow-lite-metadata:0.0.0-nightly') { changing = true }
+    implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
 
     implementation 'org.pytorch:pytorch_android:1.4.0'
     implementation 'org.pytorch:pytorch_android_torchvision:1.4.0'

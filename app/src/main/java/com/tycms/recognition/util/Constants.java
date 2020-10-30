@@ -6,7 +6,7 @@ package com.tycms.recognition.util;
 public class Constants {
 
     public static boolean isHelmet = false; //是否是头盔
-    public static boolean isVideotape = false; //是否录像
+    public static boolean isVideotape = true; //是否录像
 
 
     public static float CONFIDENCE_BUCKET_1 = 0.8f;
@@ -21,7 +21,7 @@ public class Constants {
     public static final String DIGGING = "挖掘中";
     public static final String TRANSPORTING = "运送中";
     public static final String READY_TO_LOAD = "准备装车";
-    public static final String LOADING = "装车";
+    public static final String LOADING = "疑似装车";
     public static final String LOADING_FINISH = "真实装车";
 
 

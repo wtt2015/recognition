@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.os.SystemClock;
 import android.util.Log;
 import org.nelbds.nglite.exception.NGLiteException;
-import org.nelbds.nglite.func.ImageClassifier;
 import org.nelbds.nglite.func.Recognition;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import java.util.List;
 class ClassifierManager {
 
     private final String TAG = "ClassifierManager";
-    private ImageClassifier mClassifier;
+//    private ImageClassifier mClassifier;
 
     /**
      * 初始化
@@ -30,26 +29,26 @@ class ClassifierManager {
             String labelFileName = "ty_labels.txt";
             boolean isQuantized = false;
 
-            try {
-                mClassifier = ImageClassifier.Builder.generateTFLiteImageClassifier(context,
-                        tfFileName, labelFileName, isQuantized);
-            } catch (NGLiteException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                mClassifier = ImageClassifier.Builder.generateTFLiteImageClassifier(context,
+//                        tfFileName, labelFileName, isQuantized);
+//            } catch (NGLiteException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         } else {
             String tfFileName = "mobilenet_quantized_scripted_925.pt";
             String labelFileName = "labels.txt";
             boolean isQuantized = true;
-            try {
-                mClassifier = ImageClassifier.Builder.generatePTMobileImageClassifierByTensor(context,
-                        tfFileName, labelFileName, isQuantized);
-            } catch (NGLiteException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+//            try {
+//                mClassifier = ImageClassifier.Builder.generatePTMobileImageClassifierByTensor(context,
+//                        tfFileName, labelFileName, isQuantized);
+//            } catch (NGLiteException e) {
+//                e.printStackTrace();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 
@@ -58,18 +57,18 @@ class ClassifierManager {
      * @param bitmap
      */
     public Recognition processImage(Bitmap bitmap) {
-        if (mClassifier == null){
-            Log.d(TAG, "ClassifierManager 未初始化");
-            return null;
-        }
+//        if (mClassifier == null){
+//            Log.d(TAG, "ClassifierManager 未初始化");
+//            return null;
+//        }
 
         long startTime = SystemClock.uptimeMillis();
         List<Recognition> results = new ArrayList<>();
-        try {
-            results = mClassifier.recognizeImage(bitmap);
-        } catch (NGLiteException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            results = mClassifier.recognizeImage(bitmap);
+//        } catch (NGLiteException e) {
+//            e.printStackTrace();
+//        }
         long lastProcessingTimeMs = SystemClock.uptimeMillis() - startTime;
 //        Log.i(TAG, "results is: " + results.toString());
         if (results != null && results.size() > 0) {

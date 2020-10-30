@@ -54,11 +54,11 @@ public class DetectorManager {
 //        BitmapUtil.savePicture(path,convertPic(bitmap));
 
         List<Recognition> results = new ArrayList<>();
-        try {
-            results = detector.recognizeImage(convertPic(bitmap));
-        } catch (NGLiteException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            results = detector.recognizeImage(convertPic(bitmap));
+//        } catch (NGLiteException e) {
+//            e.printStackTrace();
+//        }
         List<Recognition> mappedRecognitions = convertList(results);
         Log.i(TAG, mappedRecognitions.toString());
 
